@@ -1,4 +1,6 @@
 # presentation
+[ONLINE](https://go-talks.appspot.com/github.com/d7561985/presentation-eks-flow/k8s.slide#1)
+
 ## pre-requisites
 * https://go-talks.appspot.com/github.com/golang/gddo/talksapp/assets/home.article#TOC_1.
 * https://pkg.go.dev/golang.org/x/tools/present
