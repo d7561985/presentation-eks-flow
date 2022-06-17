@@ -28,7 +28,7 @@ https://github.com/d7561985/presentation-eks-flow
 * Modules
 
 * VPC
-.link registry.terraform.io/terraform-aws-modules/vpc/aws Registry
+.link https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/3.14.1 Registry
 
     module "vpc" {
       source  = "registry.terraform.io/terraform-aws-modules/vpc/aws"
