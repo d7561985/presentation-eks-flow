@@ -1,0 +1,109 @@
+# Spin-up Kubernetes
+
+Dzmitry Harupa
+17 Jun 2022
+d7561985@gmai.com
+d.harupa@pin-up.team
+
+## Agenda
+
+- Documentation
+- Modules
+- GitOps Helm
+- Example
+- CRMv2 RUN UP
+
+## Documentation
+
+Visit [Container (K8S)](https://wiki.time2go.tech/pages/viewpage.action?pageId=90405369)
+* VPC
+* EKS + ArgoCD
+* ASCP - AWS Secrets Manager and Config Provider for Secret Store CSI Driver
+* IRSA - IAM Roles for Service Accounts
+* NATS
+
+## Modules
+
+## VPC
+[Registry](registry.terraform.io/terraform-aws-modules/vpc/aws)
+
+```yaml
+module "vpc" {
+  source  = "registry.terraform.io/terraform-aws-modules/vpc/aws"
+    ...
+      public_subnet_tags = {
+        "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+        "pinup/label"                               = var.cluster_name
+        "isPublic"                                  = true
+      }
+
+      private_subnet_tags = {
+        "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+        "kubernetes.io/role/internal-elb"           = 1
+        "pinup/label"                               = var.cluster_name
+        "isPrivate"                                 = true
+      }
+}
+```
+
+## EKS + ArgoCD
+[Module](https://git.time2go.tech/infra/modules/aws/eks)
+
+```yaml
+module "eks" {
+  source = "git::ssh://git@gitlab.time2go.tech:10022/infra/modules/aws/eks.git?ref=v1.2.4"
+
+  cluster_name    = var.cluster_name
+  eks_version     = var.eks_version
+  vpc_id          = module.vpc.vpc_id
+  private_subnets = module.vpc.private_subnets
+  instance_type   = ["m6i.large", "m5.large", "m5n.large"] # , "m6i.large", "r4.large", "r5a.large"
+}
+```
+
+## ASCP: AWS Secrets Manager and Config Provider for Secret Store CSI Driver
+
+### Required IRSA - IAM Roles for Service Accounts
+
+* [get started](https://secrets-store-csi-driver.sigs.k8s.io/getting-started/installation.html)
+* [csi](https://docs.aws.amazon.com/systems-manager/latest/userguide/integrating_csi_driver.html)
+* [module](https://git.time2go.tech/infra/modules/aws/ascp)
+```yaml
+    module "ascp" {
+      source     = "git::ssh://git@gitlab.time2go.tech:10022/infra/modules/aws/ascp.git?ref=v1.0.0"
+      k8s-config = module.eks.k8s-config
+    }
+```
+
+## IRSA - IAM Roles for Service Accounts
+    IRSA via OIDC mapping
+Amazon EKS supports IAM Roles for Service Accounts (IRSA) that allows cluster operators to map AWS IAM Roles to Kubernetes Service Accounts.
+
+This provides fine-grained permission management for apps that run on EKS and use other AWS services. These could be apps that use S3, any other data services (RDS, MQ, STS, DynamoDB), or Kubernetes components like AWS Load Balancer controller or ExternalDNS.
+
+* [Creating an IAM role and policy for your service account](https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html)
+* [eksctl](https://github.com/weaveworks/eksctl/blob/2ff9e677d2a44496dc02d83e08e73940a980ecd0/userdocs/src/usage/iamserviceaccounts.md)
+* [module](https://git.time2go.tech/infra/modules/aws/irsa)
+
+
+## NATS
+Additionally install: NACK CRD + controller (aka NATS GitOps controller) + save secret for client user
+
+* [architecture](https://wiki.time2go.tech/display/AR/Global+MQ+Cluster%3A+NATS+Leaf+protocol)
+* [nack](https://github.com/nats-io/nack#getting-started)
+* [helm](https://nats-io.github.io/k8s/helm/charts)
+* [module](https://git.time2go.tech/infra/modules/aws/eks-nats)
+
+## GitOps Helm
+[Service Deployment] (https://wiki.time2go.tech/pages/viewpage.action?pageId=90394477)
+
+## HELM
+* [chart](https://d7561985.github.io/k8app)
+* [repo](https://github.com/d7561985/k8app)
+
+## Example
+- [AWS](https://git.time2go.tech/infra/redirector/com/dev/aws)
+- [RDS](https://git.time2go.tech/infra/redirector/com/dev/dbs)
+- [GitOPS](https://git.time2go.tech/gitops/services/be-spoke/com/services)
+
+## CRM v2.0
